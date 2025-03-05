@@ -1,0 +1,25 @@
+---
+title: "Giovanni Scacco - An Italian journey in The United Sates"
+---
+
+# Welcome to My Professional Space
+
+## About Me
+
+Hello! I'm **Giovanni Scacco**, an International student from **Italy**, currently pursuing a Master program in Business Analytics at **Baruch College**, specializing in **Accounting**. With a background in **accounting, finance, data analysis, and software asset management**, I thrive at the intersection of technology and business efficiency.
+
+My professional journey has taken me through roles in **accounting, risk advisory, and integration solutions**, including an internship at **Deloitte Risk Advisory**. I am passionate about leveraging data-driven insights to optimize IT governance and financial strategies.
+
+## Let's Connect
+
+📧 [Email Me](mailto:Gio.scacco03@gmail.com)  
+🔗 [LinkedIn](linkedin.com/in/giovanni-scacco-2411a1212)  
+
+Stay tuned as I build out this site to share my experiences, projects, and insights!
+
+```{r}
+#| include: false
+1+1
+```
+--------------
+Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
