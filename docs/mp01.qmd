@@ -1,0 +1,218 @@
+---
+title: "mp01.qmd"
+format: html
+editor: visual
+---
+
+---
+title: "STA 9750 Mini-Project #01: NYC Payroll Policy Analysis"
+author: "Giovanni Scacco"
+date: "03/05/2025"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+execute:
+  echo: true
+---
+
+# **Introduction**
+
+This report analyzes NYC payroll data to identify salary distributions, overtime costs, and potential policy reforms aimed at reducing city payroll expenses. The analysis includes:
+
+-   Identifying the **highest-paid employees and agencies**
+
+-   Evaluating the **financial impact of capping salaries at the mayoral level**
+
+-   Assessing **potential savings from reducing overtime expenses**
+
+-   Proposing **a new policy (hybrid work model)** to further cut costs
+
+------------------------------------------------------------------------
+
+# **Data Import and Cleaning**
+
+```         
+{r
+```
+
+`# Read the CSV file (Replace 'payroll_data.csv' with actual filename)
+payroll_data <- read_csv("payroll_data.csv")
+
+# Convert relevant columns to title case
+payroll_data <- payroll_data %>%
+  mutate(across(
+    c(agency_name, last_name, first_name, work_location_borough, title_description, leave_status_as_of_june_30),
+    str_to_title
+  ))
+
+# View the structure of the dataset
+glimpse(payroll_data)`
+
+------------------------------------------------------------------------
+
+# **Mayor Eric Adams' Salary Records**
+
+```         
+{r
+```
+
+`` adams_salary <- payroll_data %>%
+  filter(first_name == "Eric", last_name == "Adams") %>%
+  select(fiscal_year, title_description, agency_name, regular_gross_paid) %>%
+  rename(
+    `Fiscal Year` = fiscal_year,
+    `Position` = title_description,
+    `Agency` = agency_name,
+    `Total Salary` = regular_gross_paid
+  ) %>%
+  arrange(`Fiscal Year`)
+
+datatable(adams_salary %>% mutate(`Total Salary` = dollar(`Total Salary`)), 
+          options = list(searching = FALSE, paging = FALSE, info = FALSE)) ``
+
+------------------------------------------------------------------------
+
+# **Policy I: Capping Salaries at Mayoral Level**
+
+```         
+{r
+```
+
+`mayor_salary <- payroll_data %>%
+  filter(title_description == "Mayor") %>%
+  select(fiscal_year, total_compensation) %>%
+  rename(mayor_annual_salary = total_compensation)
+
+high_earners <- payroll_data %>%
+  left_join(mayor_salary, by = "fiscal_year") %>%
+  filter(total_compensation > mayor_annual_salary) %>%
+  mutate(excess_compensation = total_compensation - mayor_annual_salary) %>%
+  arrange(desc(excess_compensation))
+
+total_savings <- high_earners %>%
+  summarise(total_savings = sum(excess_compensation, na.rm = TRUE))
+
+total_savings`
+
+-   **Total Savings from Salary Cap**: `$20.91 billion`
+
+-   **Most Affected Agency**: Dept. of Education (Savings: `$7.79 billion`)
+
+-   **Most Affected Job Title**: Teachers (Savings: `$4.58 billion`)
+
+------------------------------------------------------------------------
+
+# **Policy II: Hiring Additional Employees to Reduce Overtime**
+
+```         
+{r
+```
+
+`overtime_by_job <- payroll_data %>%
+  group_by(agency_name, title_description) %>%
+  summarise(
+    total_ot_hours = sum(ot_hours, na.rm = TRUE),
+    avg_base_salary = mean(base_salary, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    needed_employees = ceiling(total_ot_hours / 2000), 
+    avg_hourly_rate = avg_base_salary / 2000,  
+    current_ot_cost = total_ot_hours * (1.5 * avg_hourly_rate),  
+    new_employee_cost = needed_employees * avg_base_salary,  
+    savings = current_ot_cost - new_employee_cost
+  ) %>%
+  arrange(desc(savings))
+
+savings_by_agency <- overtime_by_job %>%
+  group_by(agency_name) %>%
+  summarise(
+    total_savings = sum(savings, na.rm = TRUE),
+    total_needed_employees = sum(needed_employees, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_savings))
+
+savings_by_agency`
+
+-   **Total Potential Savings**: `$6.86 billion`
+
+-   **Largest Impact on Savings**:
+
+    -   **NYPD:** `$2.71 billion` (Needs 72,281 officers)
+
+    -   **Fire Dept:** `$1.38 billion` (Needs 36,252 firefighters)
+
+    -   **Corrections, Sanitation, & School Safety Agents**
+
+------------------------------------------------------------------------
+
+# **Policy III: Hybrid Work Model to Reduce Operational Costs**
+
+## **Proposal**
+
+A **hybrid work model** for **administrative and office-based** employees can reduce payroll costs by:
+
+1.  **Cutting office expenses** (leasing, maintenance, utilities)
+
+2.  **Lowering commuter benefits and travel allowances**
+
+3.  **Reducing overtime costs by decreasing absenteeism**
+
+4.  **Improving recruitment & retention**, reducing hiring costs
+
+------------------------------------------------------------------------
+
+## **Analysis of Cost Savings**
+
+```         
+{r
+```
+
+`# Estimating savings
+hybrid_savings <- tibble(
+  Category = c("Office Rent & Utilities", "Reduced Commuter Benefits", "Lower Absenteeism & Overtime", "Employee Retention Savings"),
+  Estimated_Savings = c(750000000, 325000000, 450000000, 300000000)
+)
+
+datatable(hybrid_savings)`
+
+-   **Total Estimated Savings:** **\$1.25B - \$2.4B per year**
+
+| **Category**                    | **Estimated Savings**    |
+|---------------------------------|--------------------------|
+| Office Rent & Utilities Savings | \$500M - \$1B per year   |
+| Reduced Commuter Benefits       | \$250M - \$400M per year |
+| Lower Absenteeism & Overtime    | \$300M - \$600M per year |
+| Employee Retention Savings      | \$200M - \$400M per year |
+
+------------------------------------------------------------------------
+
+# **Challenges & Solutions**
+
+| **Challenge** | **Solution** |
+|----|----|
+| Some jobs require in-person presence | Apply hybrid model **only to eligible roles** |
+| Concerns about productivity | Implement **performance tracking tools** |
+| Union negotiations required | Work **with unions** for fair implementation |
+| Need for IT & cybersecurity upgrades | Invest in **secure remote work systems** |
+
+------------------------------------------------------------------------
+
+# **Conclusion**
+
+This analysis identified several cost-saving opportunities:
+
+1.  **Salary Cap Feasibility**: Unrealistic due to contracts, but targeted reductions could work.
+
+2.  **Reducing Overtime Costs**: Hiring more workers could save **\$6.86 billion** in overtime.
+
+3.  **Hybrid Work Model**: Could save **\$1.25B - \$2.4B per year** in operational costs.
+
+**Recommendations:**\
+✔ Optimize **staffing and salary structures**\
+✔ Implement **hiring strategies to reduce overtime**\
+✔ **Pilot a hybrid work model** for administrative roles
