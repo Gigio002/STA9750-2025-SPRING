@@ -1,0 +1,40 @@
+---
+title: "Energy and Public Transit Analysis"
+author: "Giovanni Scacco"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+---
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+### Step 3: Import and Preview Data
+If your datasets are in CSV format, load them:
+
+```r
+```{r load-data}
+EIA_SEP_REPORT <- read.csv("EIA_SEP_REPORT.csv")
+NTD_SERVICE <- read.csv("NTD_SERVICE.csv")
+NTD_ENERGY <- read.csv("NTD_ENERGY.csv")
+NTD_PMT <- read.csv("NTD_PMT.csv")
+
+# View a snapshot
+head(EIA_SEP_REPORT)
+```
+
+### Step 4: Perform Analysis
+Each section should be structured with a heading, description, code, and output.
+
+#### **1. Most Expensive Retail Electricity**
+```r
+```{r most-expensive-electricity}
+EIA_SEP_REPORT |>
+    arrange(desc(electricity_price_MWh)) |>
+    slice(1) |>
+    select(state, electricity_price_MWh)
+```
+
+
