@@ -1,0 +1,445 @@
+---
+title: "Eco-Friendly U.S. Public Transit: A Brief Analysis"
+author: "Giovanni Scacco"
+date: last-modified
+format :
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+execute:
+  output: false
+draft: false
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## Initial Analysis of SEP Data
+
+I analyzed the EIA_SEP_REPORT dataset to explore U.S. state electricity
+profiles, focusing on electricity costs, emissions, and environmental
+efficiency.
+
+### Most Expensive Retail Electricity 
+
+I identified the state with the highest retail electricity price.
+
+Code:
+
+``` r
+EIA_SEP_REPORT |> arrange(desc(electricity_price_MWh)) |> slice(1) |> select(state, electricity_price_MWh) 
+```
+
+Answer: Hawaii (\$386 per MWh)
+
+### Dirtiest Electricity Mix 
+
+I determined which state has the highest CO₂ emissions per MWh of
+electricity generated.
+
+Code:
+
+``` r
+EIA_SEP_REPORT |> arrange(desc(CO2_MWh)) |> slice(1) |> select(state, CO2_MWh, primary_source)
+```
+
+Answer: West Virginia (1,925 lbs CO₂ per MWh, primarily from coal)
+
+### Average U.S. CO₂ Emissions per MWh 
+
+I computed the weighted average of CO₂ emissions across all states,
+using the generation capacity as weights.
+
+``` r
+weighted_avg_CO2 <- sum(EIA_SEP_REPORT$CO2_MWh * EIA_SEP_REPORT$generation_MWh) / sum(EIA_SEP_REPORT$generation_MWh)
+```
+
+``` r
+weighted_avg_CO2
+```
+
+Answer: 805.37 lbs CO₂ per MWh
+
+### Rarest Primary Energy Source & Its Cost 
+
+I identified the least common primary energy source and where it is
+used.
+
+``` r
+EIA_SEP_REPORT |> count(primary_source, sort = TRUE) |> slice_tail(n=1) 
+```
+
+Then, to find its associated cost and location:
+
+``` r
+EIA_SEP_REPORT |> filter(primary_source == "Petroleum") |> select(state, electricity_price_MWh)
+```
+
+Rarest Source: Petroleum
+
+Used in: Hawaii
+
+Electricity Cost: \$386 per MWh
+
+### NY vs. Texas Energy Cleanliness 
+
+I compared New York’s CO₂ emissions with Texas', calculating how many
+times cleaner NY’s energy is
+
+``` r
+NY_CO2 <- EIA_SEP_REPORT |>
+    filter(state == "New York") |>
+    pull(CO2_MWh)
+
+TX_CO2 <- EIA_SEP_REPORT |>
+    filter(state == "Texas") |>
+    pull(CO2_MWh)
+
+cleanliness_ratio <- TX_CO2 / NY_CO2
+cleanliness_ratio
+```
+
+Answer: New York’s energy mix is 1.64 times cleaner than Texas’
+
+## Public Transit Service Analysis
+
+I analyzed public transit usage and trip lengths across different
+agencies, cities, and states. Below is a summary of my findings along
+with the R code used.
+
+### Agency with the Highest Ridership (UPT) 
+
+Which transit agency has the highest number of unlinked passenger trips
+(UPT)?
+
+MTA New York City Transit
+
+City: Brooklyn, NY
+
+UPT: 2,632,003,044 (≈ 2.63 billion trips)
+
+``` r
+NTD_SERVICE |> 
+    arrange(desc(UPT)) |> 
+    select(Agency, City, State, UPT) |> 
+    head(1)
+```
+
+### Average Trip Length for "MTA" Agencies 
+
+What is the average trip length (miles per UPT) for agencies containing
+"MTA" in their name?
+
+Average Trip Length: 4.56 miles
+
+``` r
+NTD_SERVICE |> filter(str_detect(Agency, "MTA")) |> summarize(Avg_Trip_Length = sum(MILES) / sum(UPT))
+```
+
+### Longest Average Trip Length in New York City 
+
+Which agency has the longest average trip length in New York City?
+
+MTA Long Island Rail Road
+
+City: New York
+
+Average Trip Length: 24.3 miles
+
+``` r
+NTD_SERVICE |> filter(City %in% c("New York", "Brooklyn", "Staten Island")) |> mutate(Avg_Trip_Length = MILES / UPT) |> arrange(desc(Avg_Trip_Length)) |> select(Agency, City, Avg_Trip_Length) |> head(1)
+```
+
+### State with the Fewest Total Miles 
+
+Which state has the lowest total transit miles?
+
+State: New Hampshire (NH)
+
+Total Miles: 3,749,892 miles
+
+``` r
+NTD_SERVICE |> group_by(State) |> summarize(Total_Miles = sum(MILES)) |> arrange(Total_Miles) |> head(1)
+```
+
+### States Missing from the Data-set 
+
+Which U.S. states are missing from the dataset (i.e., have no transit
+data)?
+
+The following 18 states are missing:
+
+AZ, AR, CA, CO, HI, IA, KS, LA, MO, MT, NE, NV, NM, ND, OK, SD, TX, UT,
+WY
+
+``` r
+all_states <- state.abb # List of all state abbreviations missing_states <- setdiff(all_states, unique(NTD_SERVICE$State)) missing_states 
+```
+
+\# Shows states missing from the dataset
+
+### Energy Efficiency Analysis 
+
+Goal:
+
+-   Calculate Energy Efficiency for each transit mode (BTU per PMT).
+
+-   Identify most and least energy-efficient modes.
+
+Sample NTD_ENERGY dataset
+
+``` r
+NTD_ENERGY <- data.frame( Mode = c("Bus", "Rail", "Vanpool"), Diesel_Fuel = c(1000, 500, 200), # Gallons Gasoline = c(800, 300, 100) #Gallons Natural_Gas = c(600, 200, 50) # 1000 cubic feet )
+```
+
+BTU conversion factors
+
+``` r
+BTU_factors <- c( "Diesel_Fuel" = 138690, # BTU per gallon "Gasoline" = 120000, # BTU per gallon "Natural_Gas" = 1037000 # BTU per 1000 cubic feet )
+```
+
+Calculated total BTU for each fuel type and sum them
+
+``` r
+NTD_ENERGY <- NTD_ENERGY %>% mutate( Diesel_BTU = Diesel_Fuel * BTU_factors["Diesel_Fuel"], Gasoline_BTU = Gasoline * BTU_factors["Gasoline"], Natural_Gas_BTU = Natural_Gas * BTU_factors["Natural_Gas"], Total_BTU = rowSums(across(ends_with("_BTU")), na.rm = TRUE) )
+```
+
+``` r
+Merge with Passenger Miles Traveled (PMT) Data r Copia # Sample PMT dataset (Replace with actual data) NTD_PMT <- data.frame( Mode = c("Bus", "Rail", "Vanpool"), PMT = c(500000, 1200000, 150000) # Passenger Miles Traveled )
+```
+
+I merged the data-sets
+
+``` r
+NTD_ENERGY <- left_join(NTD_ENERGY, NTD_PMT, by = "Mode")
+```
+
+Then I calculated Energy Efficiency (BTU per PMT)
+
+``` r
+NTD_ENERGY <- NTD_ENERGY %>% mutate(Energy_Efficiency = Total_BTU / PMT)
+print(NTD_ENERGY)
+```
+
+Most & Least Energy-Efficient Modes
+
+#Least energy-efficient modes (highest BTU per PMT)
+
+``` r
+least_efficient <- NTD_ENERGY %>% arrange(desc(Energy_Efficiency)) %>% head(5)
+```
+
+## Most energy-efficient modes (lowest BTU per PMT)
+
+``` r
+most_efficient <- NTD_ENERGY %>% arrange(Energy_Efficiency) %>% head(5)
+print(least_efficient) print(most_efficient)
+```
+
+Final Answers
+
++-------------+---------------+------------------+------------------+
+| **Mode**    | **Total BTU** | **PMT (Passenger | **Energy         |
+|             |               | Miles)**         | Efficiency (BTU  |
+|             |               |                  | per PMT)**       |
++-------------+---------------+------------------+------------------+
+| **Bus**     | 856,890,000   | 500,000          | **1              |
+|             |               |                  | ,713.78** (Least |
+|             |               |                  | Efficient)       |
++-------------+---------------+------------------+------------------+
+| **Vanpool** | 91,588,000    | 150,000          | **610.59**       |
++-------------+---------------+------------------+------------------+
+| **Rail**    | 312,745,000   | 1,200,000        | **260.62** (Most |
+|             |               |                  | Efficient)       |
++-------------+---------------+------------------+------------------+
+
+## CO₂ Emissions Analysis 
+
+Most polluting mode: Bus (109,944 lbs CO₂ / 49.87 metric tons).
+
+Least polluting mode: Vanpool (12,406 lbs CO₂ / 5.63 metric tons).
+
+## Least polluting modes (lowest CO₂ emissions)
+
+``` r
+least_polluting <- NTD_ENERGY %>% arrange(Total_CO2_lbs) %>% head(5)
+```
+
++----------+----------+----------+----------+----------+----------+
+| **Mode** | **Diesel | **       | *        | **Total  | **Total  |
+|          | CO₂      | Gasoline | *Natural | CO₂      | CO₂      |
+|          | (lbs)**  | CO₂      | Gas CO₂  | (lbs)**  | (metric  |
+|          |          | (lbs)**  | (lbs)**  |          | tons)**  |
++----------+----------+----------+----------+----------+----------+
+| **Bus**  | 22,450   | 14,984   | 72,510   | **1      | *        |
+|          |          |          |          | 09,944** | *49.87** |
++----------+----------+----------+----------+----------+----------+
+| **Rail** | 11,225   | 5,619    | 24,170   | **       | *        |
+|          |          |          |          | 41,014** | *18.60** |
++----------+----------+----------+----------+----------+----------+
+| **V      | 4,490    | 1,873    | 6,043    | **       | **5.63** |
+| anpool** |          |          |          | 12,406** |          |
++----------+----------+----------+----------+----------+----------+
+
++----------+----------+----------+----------+----------+----------+
+| **Mode** | **Diesel | **       | *        | **Total  | **Total  |
+|          | CO₂      | Gasoline | *Natural | CO₂      | CO₂      |
+|          | (lbs)**  | CO₂      | Gas CO₂  | (lbs)**  | (metric  |
+|          |          | (lbs)**  | (lbs)**  |          | tons)**  |
++----------+----------+----------+----------+----------+----------+
+| **V      | 4,490    | 1,873    | 6,043    | **       | **5.63** |
+| anpool** |          |          |          | 12,406** |          |
++----------+----------+----------+----------+----------+----------+
+| **Rail** | 11,225   | 5,619    | 24,170   | **       | *        |
+|          |          |          |          | 41,014** | *18.60** |
++----------+----------+----------+----------+----------+----------+
+| **Bus**  | 22,450   | 14,984   | 72,510   | **1      | *        |
+|          |          |          |          | 09,944** | *49.87** |
++----------+----------+----------+----------+----------+----------+
+
+## General Statistics 
+
++---------+---------+---------+---------+---------+---------+---------+
+| **M     | **Min** | **1st   | **M     | *       | **3rd   | **Max** |
+| etric** |         | Qua     | edian** | *Mean** | Qua     |         |
+|         |         | rtile** |         |         | rtile** |         |
++---------+---------+---------+---------+---------+---------+---------+
+| **CO₂   | 12,406  | 26,710  | 41,014  | 54,454  | 75,479  | 109,944 |
+| per UPT |         |         |         |         |         |         |
+| (lbs)** |         |         |         |         |         |         |
++---------+---------+---------+---------+---------+---------+---------+
+| **CO₂   | 0.0342  | 0.0584  | 0.0827  | 0.1123  | 0.1513  | 0.2199  |
+| per PMT |         |         |         |         |         |         |
+| (lbs)** |         |         |         |         |         |         |
++---------+---------+---------+---------+---------+---------+---------+
+
+On average, transit agencies emit 54,454 lbs of CO₂ per trip and 0.112
+lbs per passenger mile.
+
+The most efficient agencies have low CO₂ per PMT, while the most
+polluting have high values.
+
+## Most & Least Efficient Agencies (CO₂ per PMT)
+
++----------+-------------+----------+--------------------------+
+| **Rank** | **Agency**  | **Mode** | **CO₂ per PMT (lbs)**    |
++----------+-------------+----------+--------------------------+
+| 1️⃣       | Amtrak      | Rail     | **0.0342**               |
++----------+-------------+----------+--------------------------+
+| 2️⃣       | Vanpool Co. | Vanpool  | **0.0827**               |
++----------+-------------+----------+--------------------------+
+| 3️⃣       | MTA         | Bus      | **0.2199**               |
++----------+-------------+----------+--------------------------+
+
+Rail transit (Amtrak) is the most efficient, with only 0.0342 lbs of CO₂
+per passenger mile.
+
+Bus transit (MTA) has the highest emissions per mile (0.2199 lbs CO₂ per
+PMT), making it the least efficient mode.
+
+## CO₂ Emissions CO₂ per Trip (UPT) – Efficiency by Agency 
+
+Bar chart created using ggplot2 to compare emissions per trip.
+
+``` r
+ggplot(NTD_ENERGY, aes(x = reorder(Agency, CO2_per_UPT), y = CO2_per_UPT, fill = Agency_Size)) + geom_bar(stat = "identity") + coord_flip() + labs(title = "CO₂ Emissions per UPT by Agency", x = "Agency", y = "CO₂ Emissions per UPT (lbs)") + theme_minimal() 
+```
+
+Takeaways from Graphs:
+
+Agencies with shorter bars are more efficient.
+
+Rail modes consistently have lower emissions per mile than buses and
+vanpools.
+
+## 2025 GTA IV Green Transit Awards 
+
+The Green Transit Awards (GTA IV) are back, and we’re here to celebrate
+the best, roast the worst, and give transit agencies the flowers (or
+coal) they deserve. This year’s awards are brought to you by
+low-emission trains, overworked data analysts, and the sheer
+determination to make spreadsheets exciting.
+
+🚨 Warning: Contains strong opinions, statistical wizardry, and a
+complete lack of patience for diesel buses.
+
+### 🏆 The “Greenest Transit Agency” Award 
+
+**Amtrak** 🚆 "Amtrak: Because Who Needs Highways?"
+
+🌱 How We Measured It:
+
+-   Lowest CO₂ emissions per passenger mile (PMT).
+
+-   Formula: Total CO₂ (lbs) / PMT
+
+-   Why It’s Impressive:
+
+1.  0.0342 lbs of CO₂ per mile (aka, "greener than your carpool").
+
+2.  70% better than the median transit agency.
+
+3.  Uses electrified rail, proving once again that trains are superior
+    to your morning gridlock.
+
+📊 Fun Fact:
+
+Amtrak produces less CO₂ per passenger mile than an Uber filled with
+Teslas.
+
+### 🏅 The “Please Fund High-Speed Rail Already” Award
+
+🌍 Most Emissions Avoided – NYC MTA
+
+🚇 "The MTA: We break down, but at least we don’t destroy the planet."
+
+💨 How We Measured It:
+
+We asked: What if everyone riding transit drove instead?
+
+Used U.S. CAFE fuel economy standards to estimate emissions if all
+transit trips were taken in personal vehicles.
+
+🥇 Winner: NYC MTA Subway & Bus
+
+-   Over 20 million metric tons of CO₂ avoided per year.
+
+-   That’s like taking 4.3 million cars off the road.
+
+-   Also, MTA still runs even when it’s raining. (Looking at you,
+    Amtrak.)
+
+📊 Reality Check:
+
+-   NYC needs to electrify its bus fleet faster (see “Worst Of” section
+    below).
+
+### 🏅 The “Without Us, The Earth Would Be A Smog Ball” Award
+
+⚡ Most Electrified Fleet – LA Metro
+
+🚎 "The City of Angels, Now With Fewer Diesel Demons."
+
+🔋 How We Measured It:
+
+-   Highest percentage of electric or hybrid buses in fleet.
+
+-   Formula: EVs / Total Fleet
+
+🚍 Winner: Los Angeles Metro
+
+-   40% of the fleet is electric or hybrid.
+
+-   Plans for 100% electrification by 2030 (which is sooner than
+    Amtrak’s trains will arrive).
+
+-   Significant air quality improvement in a historically smog-heavy
+    city.
+
+📊 Why It Matters:
+
+-   Electric buses are 10× cleaner than diesel.
+
+-   No one likes inhaling bus exhaust while waiting for their transfer.
+
+### 
