@@ -38,18 +38,15 @@ This report analyzes NYC payroll data to identify salary distributions, overtime
 {r
 ```
 
-`# Read the CSV file (Replace 'payroll_data.csv' with actual filename)
-payroll_data <- read_csv("payroll_data.csv")
+\`# Read the CSV file (Replace 'payroll_data.csv' with actual filename) payroll_data \<- read_csv("payroll_data.csv")
 
 # Convert relevant columns to title case
-payroll_data <- payroll_data %>%
-  mutate(across(
-    c(agency_name, last_name, first_name, work_location_borough, title_description, leave_status_as_of_june_30),
-    str_to_title
-  ))
+
+payroll_data \<- payroll_data %\>% mutate(across( c(agency_name, last_name, first_name, work_location_borough, title_description, leave_status_as_of_june_30), str_to_title ))
 
 # View the structure of the dataset
-glimpse(payroll_data)`
+
+glimpse(payroll_data)\`
 
 ------------------------------------------------------------------------
 
@@ -59,19 +56,9 @@ glimpse(payroll_data)`
 {r
 ```
 
-`` adams_salary <- payroll_data %>%
-  filter(first_name == "Eric", last_name == "Adams") %>%
-  select(fiscal_year, title_description, agency_name, regular_gross_paid) %>%
-  rename(
-    `Fiscal Year` = fiscal_year,
-    `Position` = title_description,
-    `Agency` = agency_name,
-    `Total Salary` = regular_gross_paid
-  ) %>%
-  arrange(`Fiscal Year`)
+\``adams_salary <- payroll_data %>%   filter(first_name == "Eric", last_name == "Adams") %>%   select(fiscal_year, title_description, agency_name, regular_gross_paid) %>%   rename(`Fiscal Year`= fiscal_year,`Position`= title_description,`Agency`= agency_name,`Total Salary`= regular_gross_paid   ) %>%   arrange(`Fiscal Year\`)
 
-datatable(adams_salary %>% mutate(`Total Salary` = dollar(`Total Salary`)), 
-          options = list(searching = FALSE, paging = FALSE, info = FALSE)) ``
+datatable(adams_salary %\>% mutate(`Total Salary` = dollar(`Total Salary`)), options = list(searching = FALSE, paging = FALSE, info = FALSE)) \`\`
 
 ------------------------------------------------------------------------
 
@@ -81,21 +68,13 @@ datatable(adams_salary %>% mutate(`Total Salary` = dollar(`Total Salary`)),
 {r
 ```
 
-`mayor_salary <- payroll_data %>%
-  filter(title_description == "Mayor") %>%
-  select(fiscal_year, total_compensation) %>%
-  rename(mayor_annual_salary = total_compensation)
+\`mayor_salary \<- payroll_data %\>% filter(title_description == "Mayor") %\>% select(fiscal_year, total_compensation) %\>% rename(mayor_annual_salary = total_compensation)
 
-high_earners <- payroll_data %>%
-  left_join(mayor_salary, by = "fiscal_year") %>%
-  filter(total_compensation > mayor_annual_salary) %>%
-  mutate(excess_compensation = total_compensation - mayor_annual_salary) %>%
-  arrange(desc(excess_compensation))
+high_earners \<- payroll_data %\>% left_join(mayor_salary, by = "fiscal_year") %\>% filter(total_compensation \> mayor_annual_salary) %\>% mutate(excess_compensation = total_compensation - mayor_annual_salary) %\>% arrange(desc(excess_compensation))
 
-total_savings <- high_earners %>%
-  summarise(total_savings = sum(excess_compensation, na.rm = TRUE))
+total_savings \<- high_earners %\>% summarise(total_savings = sum(excess_compensation, na.rm = TRUE))
 
-total_savings`
+total_savings\`
 
 -   **Total Savings from Salary Cap**: `$20.91 billion`
 
@@ -111,32 +90,14 @@ total_savings`
 {r
 ```
 
-`overtime_by_job <- payroll_data %>%
-  group_by(agency_name, title_description) %>%
-  summarise(
-    total_ot_hours = sum(ot_hours, na.rm = TRUE),
-    avg_base_salary = mean(base_salary, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    needed_employees = ceiling(total_ot_hours / 2000), 
-    avg_hourly_rate = avg_base_salary / 2000,  
-    current_ot_cost = total_ot_hours * (1.5 * avg_hourly_rate),  
-    new_employee_cost = needed_employees * avg_base_salary,  
-    savings = current_ot_cost - new_employee_cost
-  ) %>%
-  arrange(desc(savings))
+\`overtime_by_job \<- payroll_data %\>% group_by(agency_name, title_description) %\>% summarise( total_ot_hours = sum(ot_hours, na.rm = TRUE), avg_base_salary = mean(base_salary, na.rm = TRUE), .groups = "drop" ) %\>% mutate( needed_employees = ceiling(total_ot_hours / 2000), avg_hourly_rate = avg_base_salary / 2000,\
+current_ot_cost = total_ot_hours \* (1.5 \* avg_hourly_rate),\
+new_employee_cost = needed_employees \* avg_base_salary,\
+savings = current_ot_cost - new_employee_cost ) %\>% arrange(desc(savings))
 
-savings_by_agency <- overtime_by_job %>%
-  group_by(agency_name) %>%
-  summarise(
-    total_savings = sum(savings, na.rm = TRUE),
-    total_needed_employees = sum(needed_employees, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(desc(total_savings))
+savings_by_agency \<- overtime_by_job %\>% group_by(agency_name) %\>% summarise( total_savings = sum(savings, na.rm = TRUE), total_needed_employees = sum(needed_employees, na.rm = TRUE), .groups = "drop" ) %\>% arrange(desc(total_savings))
 
-savings_by_agency`
+savings_by_agency\`
 
 -   **Total Potential Savings**: `$6.86 billion`
 
@@ -172,13 +133,9 @@ A **hybrid work model** for **administrative and office-based** employees ca
 {r
 ```
 
-`# Estimating savings
-hybrid_savings <- tibble(
-  Category = c("Office Rent & Utilities", "Reduced Commuter Benefits", "Lower Absenteeism & Overtime", "Employee Retention Savings"),
-  Estimated_Savings = c(750000000, 325000000, 450000000, 300000000)
-)
+\`# Estimating savings hybrid_savings \<- tibble( Category = c("Office Rent & Utilities", "Reduced Commuter Benefits", "Lower Absenteeism & Overtime", "Employee Retention Savings"), Estimated_Savings = c(750000000, 325000000, 450000000, 300000000) )
 
-datatable(hybrid_savings)`
+datatable(hybrid_savings)\`
 
 -   **Total Estimated Savings:** **\$1.25B - \$2.4B per year**
 

@@ -20,7 +20,7 @@ I analyzed the EIA_SEP_REPORT dataset to explore U.S. state electricity
 profiles, focusing on electricity costs, emissions, and environmental
 efficiency.
 
-### Most Expensive Retail Electricity 
+### Most Expensive Retail Electricity
 
 I identified the state with the highest retail electricity price.
 
@@ -30,9 +30,13 @@ Code:
 EIA_SEP_REPORT |> arrange(desc(electricity_price_MWh)) |> slice(1) |> select(state, electricity_price_MWh) 
 ```
 
+```{r}
+EIA_SEP_REPORT |> arrange(desc(electricity_price_MWh)) |> slice(1) |> select(state, electricity_price_MWh) 
+```
+
 Answer: Hawaii (\$386 per MWh)
 
-### Dirtiest Electricity Mix 
+### Dirtiest Electricity Mix
 
 I determined which state has the highest CO₂ emissions per MWh of
 electricity generated.
@@ -45,7 +49,7 @@ EIA_SEP_REPORT |> arrange(desc(CO2_MWh)) |> slice(1) |> select(state, CO2_MWh, p
 
 Answer: West Virginia (1,925 lbs CO₂ per MWh, primarily from coal)
 
-### Average U.S. CO₂ Emissions per MWh 
+### Average U.S. CO₂ Emissions per MWh
 
 I computed the weighted average of CO₂ emissions across all states,
 using the generation capacity as weights.
@@ -60,7 +64,7 @@ weighted_avg_CO2
 
 Answer: 805.37 lbs CO₂ per MWh
 
-### Rarest Primary Energy Source & Its Cost 
+### Rarest Primary Energy Source & Its Cost
 
 I identified the least common primary energy source and where it is
 used.
@@ -81,7 +85,7 @@ Used in: Hawaii
 
 Electricity Cost: \$386 per MWh
 
-### NY vs. Texas Energy Cleanliness 
+### NY vs. Texas Energy Cleanliness
 
 I compared New York’s CO₂ emissions with Texas', calculating how many
 times cleaner NY’s energy is
@@ -107,7 +111,7 @@ I analyzed public transit usage and trip lengths across different
 agencies, cities, and states. Below is a summary of my findings along
 with the R code used.
 
-### Agency with the Highest Ridership (UPT) 
+### Agency with the Highest Ridership (UPT)
 
 Which transit agency has the highest number of unlinked passenger trips
 (UPT)?
@@ -125,7 +129,7 @@ NTD_SERVICE |>
     head(1)
 ```
 
-### Average Trip Length for "MTA" Agencies 
+### Average Trip Length for "MTA" Agencies
 
 What is the average trip length (miles per UPT) for agencies containing
 "MTA" in their name?
@@ -136,7 +140,7 @@ Average Trip Length: 4.56 miles
 NTD_SERVICE |> filter(str_detect(Agency, "MTA")) |> summarize(Avg_Trip_Length = sum(MILES) / sum(UPT))
 ```
 
-### Longest Average Trip Length in New York City 
+### Longest Average Trip Length in New York City
 
 Which agency has the longest average trip length in New York City?
 
@@ -150,7 +154,7 @@ Average Trip Length: 24.3 miles
 NTD_SERVICE |> filter(City %in% c("New York", "Brooklyn", "Staten Island")) |> mutate(Avg_Trip_Length = MILES / UPT) |> arrange(desc(Avg_Trip_Length)) |> select(Agency, City, Avg_Trip_Length) |> head(1)
 ```
 
-### State with the Fewest Total Miles 
+### State with the Fewest Total Miles
 
 Which state has the lowest total transit miles?
 
@@ -162,7 +166,7 @@ Total Miles: 3,749,892 miles
 NTD_SERVICE |> group_by(State) |> summarize(Total_Miles = sum(MILES)) |> arrange(Total_Miles) |> head(1)
 ```
 
-### States Missing from the Data-set 
+### States Missing from the Data-set
 
 Which U.S. states are missing from the dataset (i.e., have no transit
 data)?
@@ -178,7 +182,7 @@ all_states <- state.abb # List of all state abbreviations missing_states <- setd
 
 \# Shows states missing from the dataset
 
-### Energy Efficiency Analysis 
+### Energy Efficiency Analysis
 
 Goal:
 
@@ -238,22 +242,25 @@ print(least_efficient) print(most_efficient)
 
 Final Answers
 
-+-------------+---------------+------------------+------------------+
-| **Mode**    | **Total BTU** | **PMT (Passenger | **Energy         |
-|             |               | Miles)**         | Efficiency (BTU  |
-|             |               |                  | per PMT)**       |
-+-------------+---------------+------------------+------------------+
-| **Bus**     | 856,890,000   | 500,000          | **1              |
-|             |               |                  | ,713.78** (Least |
-|             |               |                  | Efficient)       |
-+-------------+---------------+------------------+------------------+
-| **Vanpool** | 91,588,000    | 150,000          | **610.59**       |
-+-------------+---------------+------------------+------------------+
-| **Rail**    | 312,745,000   | 1,200,000        | **260.62** (Most |
-|             |               |                  | Efficient)       |
-+-------------+---------------+------------------+------------------+
++---------------+---------------+----------------+----------------+
+| **Mode**      | **Total BTU** | **PMT          | **Energy       |
+|               |               | (Passenger     | Efficiency     |
+|               |               | Miles)**       | (BTU per       |
+|               |               |                | PMT)**         |
++---------------+---------------+----------------+----------------+
+| **Bus**       | 856,890,000   | 500,000        | **1            |
+|               |               |                | ,7             |
+|               |               |                | 13.78** (Least |
+|               |               |                | Efficient)     |
++---------------+---------------+----------------+----------------+
+| **Vanpool**   | 91,588,000    | 150,000        | **610.59**     |
++---------------+---------------+----------------+----------------+
+| **Rail**      | 312,745,000   | 1,200,000      | **             |
+|               |               |                | 260.62** (Most |
+|               |               |                | Efficient)     |
++---------------+---------------+----------------+----------------+
 
-## CO₂ Emissions Analysis 
+## CO₂ Emissions Analysis
 
 Most polluting mode: Bus (109,944 lbs CO₂ / 49.87 metric tons).
 
@@ -265,53 +272,68 @@ Least polluting mode: Vanpool (12,406 lbs CO₂ / 5.63 metric tons).
 least_polluting <- NTD_ENERGY %>% arrange(Total_CO2_lbs) %>% head(5)
 ```
 
-+----------+----------+----------+----------+----------+----------+
-| **Mode** | **Diesel | **       | *        | **Total  | **Total  |
-|          | CO₂      | Gasoline | *Natural | CO₂      | CO₂      |
-|          | (lbs)**  | CO₂      | Gas CO₂  | (lbs)**  | (metric  |
-|          |          | (lbs)**  | (lbs)**  |          | tons)**  |
-+----------+----------+----------+----------+----------+----------+
-| **Bus**  | 22,450   | 14,984   | 72,510   | **1      | *        |
-|          |          |          |          | 09,944** | *49.87** |
-+----------+----------+----------+----------+----------+----------+
-| **Rail** | 11,225   | 5,619    | 24,170   | **       | *        |
-|          |          |          |          | 41,014** | *18.60** |
-+----------+----------+----------+----------+----------+----------+
-| **V      | 4,490    | 1,873    | 6,043    | **       | **5.63** |
-| anpool** |          |          |          | 12,406** |          |
-+----------+----------+----------+----------+----------+----------+
++---------+---------+---------+---------+---------+---------+
+| *       | *       |         | -   \*  | **Total | **Total |
+| *Mode** | *Diesel | **G     | Natural | CO₂     | CO₂     |
+|         | CO₂     | asoline |     Gas | (lbs)** | (metric |
+|         | (lbs)** | CO₂     |     CO₂ |         | tons)** |
+|         |         | (lbs)** |     (l  |         |         |
+|         |         |         | bs)\*\* |         |         |
++---------+---------+---------+---------+---------+---------+
+| **Bus** | 22,450  | 14,984  | 72,510  | **1     | -       |
+|         |         |         |         | 0       |    \*49 |
+|         |         |         |         | 9,944** | .87\*\* |
++---------+---------+---------+---------+---------+---------+
+| *       | 11,225  | 5,619   | 24,170  |         | -       |
+| *Rail** |         |         |         | **4     |    \*18 |
+|         |         |         |         | 1,014** | .60\*\* |
++---------+---------+---------+---------+---------+---------+
+| **V     | 4,490   | 1,873   | 6,043   |         | *       |
+| a       |         |         |         | **1     | *5.63** |
+| npool** |         |         |         | 2,406** |         |
++---------+---------+---------+---------+---------+---------+
 
-+----------+----------+----------+----------+----------+----------+
-| **Mode** | **Diesel | **       | *        | **Total  | **Total  |
-|          | CO₂      | Gasoline | *Natural | CO₂      | CO₂      |
-|          | (lbs)**  | CO₂      | Gas CO₂  | (lbs)**  | (metric  |
-|          |          | (lbs)**  | (lbs)**  |          | tons)**  |
-+----------+----------+----------+----------+----------+----------+
-| **V      | 4,490    | 1,873    | 6,043    | **       | **5.63** |
-| anpool** |          |          |          | 12,406** |          |
-+----------+----------+----------+----------+----------+----------+
-| **Rail** | 11,225   | 5,619    | 24,170   | **       | *        |
-|          |          |          |          | 41,014** | *18.60** |
-+----------+----------+----------+----------+----------+----------+
-| **Bus**  | 22,450   | 14,984   | 72,510   | **1      | *        |
-|          |          |          |          | 09,944** | *49.87** |
-+----------+----------+----------+----------+----------+----------+
++---------+---------+---------+---------+---------+---------+
+| *       | *       |         | -   \*  | **Total | **Total |
+| *Mode** | *Diesel | **G     | Natural | CO₂     | CO₂     |
+|         | CO₂     | asoline |     Gas | (lbs)** | (metric |
+|         | (lbs)** | CO₂     |     CO₂ |         | tons)** |
+|         |         | (lbs)** |     (l  |         |         |
+|         |         |         | bs)\*\* |         |         |
++---------+---------+---------+---------+---------+---------+
+| **V     | 4,490   | 1,873   | 6,043   |         | *       |
+| a       |         |         |         | **1     | *5.63** |
+| npool** |         |         |         | 2,406** |         |
++---------+---------+---------+---------+---------+---------+
+| *       | 11,225  | 5,619   | 24,170  |         | -       |
+| *Rail** |         |         |         | **4     |    \*18 |
+|         |         |         |         | 1,014** | .60\*\* |
++---------+---------+---------+---------+---------+---------+
+| **Bus** | 22,450  | 14,984  | 72,510  | **1     | -       |
+|         |         |         |         | 0       |    \*49 |
+|         |         |         |         | 9,944** | .87\*\* |
++---------+---------+---------+---------+---------+---------+
 
-## General Statistics 
+## General Statistics
 
-+---------+---------+---------+---------+---------+---------+---------+
-| **M     | **Min** | **1st   | **M     | *       | **3rd   | **Max** |
-| etric** |         | Qua     | edian** | *Mean** | Qua     |         |
-|         |         | rtile** |         |         | rtile** |         |
-+---------+---------+---------+---------+---------+---------+---------+
-| **CO₂   | 12,406  | 26,710  | 41,014  | 54,454  | 75,479  | 109,944 |
-| per UPT |         |         |         |         |         |         |
-| (lbs)** |         |         |         |         |         |         |
-+---------+---------+---------+---------+---------+---------+---------+
-| **CO₂   | 0.0342  | 0.0584  | 0.0827  | 0.1123  | 0.1513  | 0.2199  |
-| per PMT |         |         |         |         |         |         |
-| (lbs)** |         |         |         |         |         |         |
-+---------+---------+---------+---------+---------+---------+---------+
++--------+--------+--------+--------+--------+--------+--------+
+| **M    | *      | **1st  | **M    | -      | **3rd  | *      |
+| e      | *Min** | Qua    | e      |   \*Me | Qua    | *Max** |
+| tric** |        | r      | dian** | an\*\* | r      |        |
+|        |        | tile** |        |        | tile** |        |
++--------+--------+--------+--------+--------+--------+--------+
+| **CO₂  | 12,406 | 26,710 | 41,014 | 54,454 | 75,479 | 1      |
+| per    |        |        |        |        |        | 09,944 |
+| UPT    |        |        |        |        |        |        |
+| (      |        |        |        |        |        |        |
+| lbs)** |        |        |        |        |        |        |
++--------+--------+--------+--------+--------+--------+--------+
+| **CO₂  | 0.0342 | 0.0584 | 0.0827 | 0.1123 | 0.1513 | 0.2199 |
+| per    |        |        |        |        |        |        |
+| PMT    |        |        |        |        |        |        |
+| (      |        |        |        |        |        |        |
+| lbs)** |        |        |        |        |        |        |
++--------+--------+--------+--------+--------+--------+--------+
 
 On average, transit agencies emit 54,454 lbs of CO₂ per trip and 0.112
 lbs per passenger mile.
@@ -321,15 +343,34 @@ polluting have high values.
 
 ## Most & Least Efficient Agencies (CO₂ per PMT)
 
-+----------+-------------+----------+--------------------------+
-| **Rank** | **Agency**  | **Mode** | **CO₂ per PMT (lbs)**    |
-+----------+-------------+----------+--------------------------+
-| 1️⃣       | Amtrak      | Rail     | **0.0342**               |
-+----------+-------------+----------+--------------------------+
-| 2️⃣       | Vanpool Co. | Vanpool  | **0.0827**               |
-+----------+-------------+----------+--------------------------+
-| 3️⃣       | MTA         | Bus      | **0.2199**               |
-+----------+-------------+----------+--------------------------+
++---------+---------+---------+-------------------+---------+
+| *       | **A     | *       | **CO₂ per PMT     |         |
+| *Rank** | gency** | *Mode** | (lbs)**           |         |
++---------+---------+---------+-------------------+---------+
+| 1️⃣ \|   |         |         |                   |         |
+| Amtrak  |         |         |                   |         |
+| \| Rail |         |         |                   |         |
+| \|      |         |         |                   |         |
+| **0     |         |         |                   |         |
+| .0342** |         |         |                   |         |
+| \|      |         |         |                   |         |
++---------+---------+---------+-------------------+---------+
+| 2️⃣ \|   |         |         |                   |         |
+| Vanpool |         |         |                   |         |
+| Co. \|  |         |         |                   |         |
+| Vanpool |         |         |                   |         |
+| \|      |         |         |                   |         |
+| **0     |         |         |                   |         |
+| .0827** |         |         |                   |         |
+| \|      |         |         |                   |         |
++---------+---------+---------+-------------------+---------+
+| 3️⃣ \|   |         |         |                   |         |
+| MTA \|  |         |         |                   |         |
+| Bus \|  |         |         |                   |         |
+| **0     |         |         |                   |         |
+| .2199** |         |         |                   |         |
+| \|      |         |         |                   |         |
++---------+---------+---------+-------------------+---------+
 
 Rail transit (Amtrak) is the most efficient, with only 0.0342 lbs of CO₂
 per passenger mile.
@@ -337,7 +378,7 @@ per passenger mile.
 Bus transit (MTA) has the highest emissions per mile (0.2199 lbs CO₂ per
 PMT), making it the least efficient mode.
 
-## CO₂ Emissions CO₂ per Trip (UPT) – Efficiency by Agency 
+## CO₂ Emissions CO₂ per Trip (UPT) – Efficiency by Agency
 
 Bar chart created using ggplot2 to compare emissions per trip.
 
@@ -352,7 +393,7 @@ Agencies with shorter bars are more efficient.
 Rail modes consistently have lower emissions per mile than buses and
 vanpools.
 
-## 2025 GTA IV Green Transit Awards 
+## 2025 GTA IV Green Transit Awards
 
 The Green Transit Awards (GTA IV) are back, and we’re here to celebrate
 the best, roast the worst, and give transit agencies the flowers (or
@@ -363,7 +404,7 @@ determination to make spreadsheets exciting.
 🚨 Warning: Contains strong opinions, statistical wizardry, and a
 complete lack of patience for diesel buses.
 
-### 🏆 The “Greenest Transit Agency” Award 
+### 🏆 The “Greenest Transit Agency” Award
 
 **Amtrak** 🚆 "Amtrak: Because Who Needs Highways?"
 
