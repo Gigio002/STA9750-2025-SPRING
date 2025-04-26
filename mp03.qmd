@@ -1,0 +1,219 @@
+---
+title: "Mini-Project 03: Creating the Ultimate Playlist"
+author: "Giovanni Scacco"
+format: html
+editor: visual
+---
+
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(jsonlite)
+library(stringr)
+
+strip_spotify_prefix <- function(x) {
+  str_replace(x, "spotify:(artist|track|album):", "")
+}
+
+load_playlists <- function() {
+  json_files <- list.files("data/mp03/playlists", pattern = "*.json", full.names = TRUE)
+
+  map_dfr(json_files, function(file) {
+    pl_data <- fromJSON(file)
+    playlists <- pl_data$playlists
+
+    map_dfr(1:nrow(playlists), function(i) {
+      playlist <- playlists[i, ]
+      tracks <- playlist$tracks[[1]]
+
+      if (is.null(tracks) || nrow(tracks) == 0) return(NULL)
+
+      tibble(
+        playlist_name = rep(playlist$name, nrow(tracks)),
+        playlist_id = rep(playlist$pid, nrow(tracks)),
+        playlist_followers = rep(playlist$num_followers, nrow(tracks)),
+        playlist_position = tracks$pos,
+        track_name = tracks$track_name,
+        track_uri = tracks$track_uri,
+        artist_name = tracks$artist_name,
+        artist_uri = tracks$artist_uri,
+        album_name = tracks$album_name,
+        album_uri = tracks$album_uri,
+        duration = tracks$duration_ms
+      )
+    })
+  })
+}
+
+# Load and create PLAYLIST_DF
+PLAYLIST_DF <- load_playlists() %>%
+  mutate(
+    track_id = strip_spotify_prefix(track_uri),
+    artist_id = strip_spotify_prefix(artist_uri),
+    album_id = strip_spotify_prefix(album_uri)
+  )
+
+```
+
+---
+```{r}
+# Load SONGS data
+load_songs <- function() {
+  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/refs/heads/master/data.csv"
+  destfile <- "data/mp03/songs/data.csv"
+
+  if (!file.exists(destfile)) {
+    dir.create("data/mp03/songs", recursive = TRUE, showWarnings = FALSE)
+    download.file(url, destfile, mode = "wb")
+  }
+
+  read_csv(destfile)
+}
+
+SONGS <- load_songs()
+
+# Load the SONGS dataset
+load_songs <- function() {
+  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/refs/heads/master/data.csv"
+  destfile <- "data/mp03/songs/data.csv"
+
+  if (!file.exists(destfile)) {
+    dir.create("data/mp03/songs", recursive = TRUE, showWarnings = FALSE)
+    download.file(url, destfile, mode = "wb")
+  }
+
+  read_csv(destfile)
+}
+
+SONGS <- load_songs()
+
+
+# Exploratory Data Analysis
+
+## Distinct Tracks and Artists
+
+```{r}
+PLAYLIST_DF %>% distinct(track_id) %>% nrow()
+PLAYLIST_DF %>% distinct(artist_id) %>% nrow()
+```
+
+## Most Popular Tracks
+
+```{r}
+PLAYLIST_DF %>% 
+  group_by(track_name) %>% 
+  summarise(appearances = n()) %>% 
+  arrange(desc(appearances)) %>% 
+  slice_head(n = 5)
+```
+
+## Most Danceable Track
+SONGS %>% arrange(desc(danceability)) %>% slice(1)
+
+
+---
+
+# Playlist Curation
+
+Based on anchor songs "One Dance" and "Closer", I explored related songs using playlist co-occurrence, musical features, artist connection, year similarity, and valence matching.
+
+```{r}
+ultimate_playlist <- tibble(
+  track_order = 1:12,
+  track_name = c(
+    "Don't Let Me Down",
+    "Cold Water",
+    "Too Good",
+    "Broccoli (feat. Lil Yachty)",
+    "Work from Home",
+    "Forever",
+    "Roses",
+    "Party In The U.S.A.",
+    "See You Again",
+    "Replay",
+    "Paper Planes",
+    "Soak Up The Sun"
+  ),
+  artist = c(
+    "The Chainsmokers",
+    "Major Lazer feat. Justin Bieber & MØ",
+    "Drake feat. Rihanna",
+    "D.R.A.M. feat. Lil Yachty",
+    "Fifth Harmony",
+    "Chris Brown",
+    "The Chainsmokers",
+    "Miley Cyrus",
+    "Wiz Khalifa",
+    "Iyaz",
+    "M.I.A.",
+    "Sheryl Crow"
+  )
+)
+```
+
+---
+
+# Playlist Feature Analysis
+
+```{r}
+# Enrich Playlist
+final_playlist_features <- ultimate_playlist %>%
+  left_join(SONGS %>% rename(track_name = name), by = "track_name") %>%
+  distinct(track_name, .keep_all = TRUE)
+
+# View playlist with features
+final_playlist_features %>%
+  select(track_order, track_name, artist, danceability, energy, valence)
+
+```
+
+## Danceability Flow
+
+```{r}
+library(ggplot2)
+
+ggplot(final_playlist_features, aes(x = track_order, y = danceability)) +
+  geom_line() +
+  geom_point(size = 3) +
+  labs(
+    title = "Danceability Flow of Ultimate Playlist",
+    x = "Track Order",
+    y = "Danceability"
+  ) +
+  theme_minimal()
+```
+
+---
+
+# 🎶 Playlist Track Previews
+
+Here are previews of selected tracks from my Ultimate Playlist:
+
+## Track 1: Don't Let Me Down - The Chainsmokers
+::: {.video embed="https://www.youtube.com/watch?v=Io0fBr1XBUA"}
+:::
+
+## Track 2: Cold Water - Major Lazer feat. Justin Bieber & MØ
+::: {.video embed="https://www.youtube.com/watch?v=n56GX0HX5xk"}
+:::
+
+## Track 3: Too Good - Drake feat. Rihanna
+::: {.video embed="https://www.youtube.com/watch?v=wTCvV20hn3M"}
+:::
+
+---
+
+# Design Principles
+
+This playlist was built around two anchor songs, "One Dance" and "Closer," emphasizing high danceability and smooth energetic flow. Related tracks were selected using heuristics based on co-appearance, key and tempo matching, artist similarity, release year consistency, and mood alignment. The playlist progresses from high-energy dance tracks through smoother R&B and pop, ending in a mellow, relaxed vibe for a full musical journey. Lesser-known tracks are included to encourage discovery along with familiarity.
+
+---
+
+# Conclusion
+
+Through responsible data management, statistical analysis, musical feature engineering, and thoughtful curation, I created a playlist that balances hit songs and hidden gems in a way that flows naturally and keeps listeners engaged from start to finish.
+
+---
+
+*This work ©2025 by Giovanni Scacco is licensed under a Creative Commons BY-NC-SA 4.0 license.*
