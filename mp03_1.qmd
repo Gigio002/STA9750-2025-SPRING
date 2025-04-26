@@ -3,32 +3,34 @@ title: "Mini-Project 03: Creating the Ultimate Playlist"
 author: "Giovanni Scacco"
 format: html
 editor: visual
+theme: lux
+toc: true
 ---
-
-
 
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(jsonlite)
 library(stringr)
 
+# Helper function
 strip_spotify_prefix <- function(x) {
   str_replace(x, "spotify:(artist|track|album):", "")
 }
 
+# Load playlists
 load_playlists <- function() {
   json_files <- list.files("data/mp03/playlists", pattern = "*.json", full.names = TRUE)
-
+  
   map_dfr(json_files, function(file) {
     pl_data <- fromJSON(file)
     playlists <- pl_data$playlists
-
+    
     map_dfr(1:nrow(playlists), function(i) {
       playlist <- playlists[i, ]
       tracks <- playlist$tracks[[1]]
-
+      
       if (is.null(tracks) || nrow(tracks) == 0) return(NULL)
-
+      
       tibble(
         playlist_name = rep(playlist$name, nrow(tracks)),
         playlist_id = rep(playlist$pid, nrow(tracks)),
@@ -46,7 +48,6 @@ load_playlists <- function() {
   })
 }
 
-# Load and create PLAYLIST_DF
 PLAYLIST_DF <- load_playlists() %>%
   mutate(
     track_id = strip_spotify_prefix(track_uri),
@@ -54,44 +55,34 @@ PLAYLIST_DF <- load_playlists() %>%
     album_id = strip_spotify_prefix(album_uri)
   )
 
+# ✅ Correctly Load SONGS Immediately
+load_songs <- function() {
+  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/refs/heads/master/data.csv"
+  destfile <- "data/mp03/songs/data.csv"
+  
+  if (!file.exists(destfile)) {
+    dir.create("data/mp03/songs", recursive = TRUE, showWarnings = FALSE)
+    download.file(url, destfile, mode = "wb")
+  }
+  
+  read_csv(destfile)
+}
+
+SONGS <- load_songs()
 ```
 
----
-```{r}
-# Load SONGS data
-load_songs <- function() {
-  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/refs/heads/master/data.csv"
-  destfile <- "data/mp03/songs/data.csv"
-
-  if (!file.exists(destfile)) {
-    dir.create("data/mp03/songs", recursive = TRUE, showWarnings = FALSE)
-    download.file(url, destfile, mode = "wb")
-  }
-
-  read_csv(destfile)
-}
-
-SONGS <- load_songs()
-
-# Load the SONGS dataset
-load_songs <- function() {
-  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/refs/heads/master/data.csv"
-  destfile <- "data/mp03/songs/data.csv"
-
-  if (!file.exists(destfile)) {
-    dir.create("data/mp03/songs", recursive = TRUE, showWarnings = FALSE)
-    download.file(url, destfile, mode = "wb")
-  }
-
-  read_csv(destfile)
-}
-
-SONGS <- load_songs()
-
-
-# Exploratory Data Analysis
+### Exploratory Data Analysis
+In this section, I conducted preliminary exploration of the playlist and song datasets to understand their structure and key characteristics.
+By identifying unique tracks and artists, as well as analyzing popularity and danceability metrics, I set a foundation for curating a high-quality playlist.
 
 ## Distinct Tracks and Artists
+Here, I measured the diversity of the dataset by counting the number of unique tracks and unique artists across all playlists.
+
+A higher number of distinct tracks suggests rich musical variety.
+
+A higher number of distinct artists indicates a wide range of musical influences and genres.
+
+Understanding this diversity helps ensure that my curated playlist reflects a broad musical landscape.
 
 ```{r}
 PLAYLIST_DF %>% distinct(track_id) %>% nrow()
@@ -99,7 +90,11 @@ PLAYLIST_DF %>% distinct(artist_id) %>% nrow()
 ```
 
 ## Most Popular Tracks
+To gauge listener preferences, I analyzed which songs appeared most frequently across user playlists.
 
+Identifying the top 5 most popular tracks highlights songs that resonate strongly with a large audience.
+
+This analysis also helped me select anchor songs that would form the backbone of my curated playlist.
 ```{r}
 PLAYLIST_DF %>% 
   group_by(track_name) %>% 
@@ -109,9 +104,14 @@ PLAYLIST_DF %>%
 ```
 
 ## Most Danceable Track
+Danceability is a crucial feature that reflects how suitable a track is for dancing — based on beat, tempo, rhythm stability, and energy.
+
+By finding the song with the highest danceability score, I discovered the track most likely to energize and engage listeners.
+
+Danceability was a key attribute I considered when selecting songs to maintain an upbeat and smooth playlist flow.
+```{r}
 SONGS %>% arrange(desc(danceability)) %>% slice(1)
-
-
+```
 ---
 
 # Playlist Curation
@@ -167,4 +167,5 @@ final_playlist_features %>%
   select(track_order, track_name, artist, danceability, energy, valence)
 
 ```
+
 
