@@ -1,0 +1,380 @@
+---
+title: "Mini-Project #04: Exploring Recent US Political Shifts"
+author: "Giovanni Scacco"
+format: html
+editor: visual
+---
+
+## Introduction
+
+In this project, I investigated the narrative of a nationwide political shift following the 2024 U.S. Presidential Election. The *New York Times* published a widely-circulated map illustrating a country turning redder, raising questions about whether this shift was overstated.
+
+Acting as a partisan Republican commentator, I aimed to analyze county-level election results to validate a Republican narrative: that 2024 marked a profound political realignment. My work included scraping, cleaning, analyzing, and visualizing election data, as well as developing compelling partisan messaging.
+
+This report documents the process, analysis, and conclusions from this investigation.
+
+---
+
+## Data Collection and Preparation
+
+### Downloading County Shapefiles
+
+I began by downloading U.S. county shapefiles from the U.S. Census Bureau. I ensured the download was automated and cached to avoid redundant downloads.
+
+```{r}
+library(sf)
+library(dplyr)
+library(readr)
+
+
+data_dir <- "data/mp04"
+if (!dir.exists(data_dir)) dir.create(data_dir, recursive = TRUE)
+
+shapefile_url <- "https://www2.census.gov/geo/tiger/GENZ2022/shp/cb_2022_us_county_5m.zip"
+shapefile_zip <- file.path(data_dir, "county_shapefile.zip")
+
+if (!file.exists(shapefile_zip)) {
+  download.file(shapefile_url, shapefile_zip)
+  unzip(shapefile_zip, exdir = data_dir)
+}
+
+shapefile_path <- list.files(data_dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+counties_sf <- st_read(shapefile_path)
+```
+
+
+I confirmed that r nrow(counties_sf) counties were successfully loaded.
+
+Scraping 2024 and 2020 Election Results
+To collect election results, I built a scraping function using httr2 and rvest, iterating over all 50 states. Each state’s results were cached locally to ensure reproducibility and efficiency.
+
+I handled inconsistent column names (e.g., county_61, county_214) and cleaned numeric fields to standardize vote counts across states and years.
+
+```{r}
+# --- Load cleaned 2024 election results FIRST ---
+results_2024_all_clean <- read_csv("data/mp04/2024_election_results_all_states.csv")
+
+# Define valid county columns
+county_cols_2024 <- c("county", "county_214", "county_116", "county_22", "county_23", 
+                      "county_156", "county_61", "county_267", "county_31", "county_24", 
+                      "county_city", "parish")
+
+# Intersect available columns
+valid_county_cols_2024 <- intersect(county_cols_2024, colnames(results_2024_all_clean))
+
+# Create standardized county_name and uppercase state
+results_2024_all_clean <- results_2024_all_clean |>
+  mutate(
+    county_name = coalesce(!!!syms(valid_county_cols_2024)),
+    state = toupper(state),
+    county_name = toupper(county_name)
+  )
+
+# --- Load cleaned 2020 election results ---
+results_2020_all_clean <- read_csv("data/mp04/2020_election_results_all_states.csv")
+
+# Define valid county columns for 2020 (you may need to adjust these if different)
+county_cols_2020 <- c("county", "county_169", "county_126", "county_31", "county_46", 
+                      "county_201", "county_49", "county_33", "county_city", "parish")
+
+valid_county_cols_2020 <- intersect(county_cols_2020, colnames(results_2020_all_clean))
+
+results_2020_all_clean <- results_2020_all_clean |>
+  mutate(
+    county_name = coalesce(!!!syms(valid_county_cols_2020)),
+    state = toupper(state),
+    county_name = toupper(county_name)
+  )
+
+# --- Clean shapefile ---
+counties_sf_clean <- counties_sf |>
+  mutate(
+    state = toupper(STATE_NAME),
+    county_name = toupper(NAME)
+  )
+
+# --- Combine election results ---
+election_combined <- left_join(
+  results_2024_all_clean |> select(state, county_name, trump_2024 = donald_trump_republican, harris_2024 = kamala_harris_democratic, total_2024 = total),
+  results_2020_all_clean |> select(state, county_name, trump_2020 = donald_trump_republican, biden_2020 = joe_biden_democratic, total_2020 = total),
+  by = c("state", "county_name")
+)
+
+# --- Join with shapefile ---
+geo_combined <- left_join(counties_sf_clean, election_combined, by = c("state", "county_name"))
+
+# --- Identify county with most Trump votes in 2024 ---
+most_trump_votes_2024 <- geo_combined |>
+  filter(trump_2024 == max(trump_2024, na.rm = TRUE)) |>
+  select(state, county_name, trump_2024)
+
+most_trump_votes_2024
+```
+
+➡️ Los Angeles County, California recorded 1,189,862 votes for Trump.
+
+🟢 Counties with the highest Biden vote share in 2020
+```qmd
+```{r}
+```{r}
+geo_combined <- geo_combined |>
+  mutate(biden_fraction_2020 = biden_2020 / total_2020)
+
+highest_biden_fraction_2020 <- geo_combined |>
+  filter(biden_fraction_2020 == max(biden_fraction_2020, na.rm = TRUE)) |>
+  select(state, county_name, biden_fraction_2020)
+
+highest_biden_fraction_2020
+```
+
+➡️ Oglala Lakota County, South Dakota delivered 88.4% of its votes to Biden.
+
+🟢 Counties with the largest shift toward Trump (absolute)
+```{r}
+```{r}
+geo_combined <- geo_combined |>
+  mutate(shift_trump_abs = trump_2024 - trump_2020)
+
+largest_shift_trump <- geo_combined |>
+  filter(shift_trump_abs == max(shift_trump_abs, na.rm = TRUE)) |>
+  select(state, county_name, shift_trump_abs)
+
+largest_shift_trump
+```
+
+➡️ Miami-Dade County, Florida showed an increase of +72,757 votes for Trump between 2020 and 2024.
+
+🟢 State with the smallest shift toward Trump
+```{r}
+```{r}
+state_shift <- geo_combined |>
+  group_by(state) |>
+  summarise(
+    total_trump_2020 = sum(trump_2020, na.rm = TRUE),
+    total_trump_2024 = sum(trump_2024, na.rm = TRUE),
+    total_harris_2024 = sum(harris_2024, na.rm = TRUE),
+    shift_trump = total_trump_2024 - total_trump_2020
+  ) |>
+  arrange(shift_trump)
+
+state_shift |> slice(1)
+```
+
+➡️ Louisiana was the state least shifting toward Trump, with a net change of -47,518 votes.
+
+🟢 Largest county by area
+```{r}
+```{r}
+geo_combined <- geo_combined |>
+  mutate(area_sq_meters = as.numeric(st_area(geometry)))
+
+largest_county_area <- geo_combined |>
+  filter(area_sq_meters == max(area_sq_meters, na.rm = TRUE)) |>
+  select(state, county_name, area_sq_meters)
+
+largest_county_area
+```
+
+➡️ Yukon-Koyukuk, Alaska covers 380,497 km², the largest by area.
+
+🟢 County with highest voter density (2020)
+```{r}
+```{r}
+geo_combined <- geo_combined |>
+  mutate(area_sq_meters = as.numeric(st_area(geometry)),
+         area_sq_km = area_sq_meters / 1e6,
+         voter_density_2020 = total_2020 / area_sq_km)
+
+highest_voter_density <- geo_combined |>
+  filter(voter_density_2020 == max(voter_density_2020, na.rm = TRUE)) |>
+  select(state, county_name, voter_density_2020)
+
+highest_voter_density
+```
+
+➡️ Fairfax County, Virginia had the highest density at 37,360 voters per square kilometer.
+
+🟢 County with largest turnout increase in 2024
+```{r}
+```{r}
+geo_combined <- geo_combined |>
+  mutate(turnout_change = total_2024 - total_2020)
+
+largest_turnout_increase <- geo_combined |>
+  filter(turnout_change == max(turnout_change, na.rm = TRUE)) |>
+  select(state, county_name, turnout_change)
+
+largest_turnout_increase
+```
+
+➡️ Montgomery County, Texas added +35,715 voters compared to 2020.
+
+Reproducing the NYT Map
+I computed the percentage shift in Republican support per county and visualized it using arrows indicating direction and magnitude.
+
+Counties shifting right were colored red; counties shifting left, blue.
+
+```{r}
+library(ggplot2)
+
+geo_combined <- geo_combined |>
+  mutate(
+    pct_trump_2020 = trump_2020 / total_2020,
+    pct_trump_2024 = trump_2024 / total_2024,
+    shift_pct = pct_trump_2024 - pct_trump_2020
+  )
+
+geo_combined_proj <- st_transform(geo_combined, crs = 5070)
+centroids_proj <- st_centroid(geo_combined_proj)
+
+arrow_scale <- 50000  # adjust scale for projection
+
+centroids_coords <- centroids_proj |>
+  mutate(
+    x_start = st_coordinates(geometry)[,1],
+    y_start = st_coordinates(geometry)[,2],
+    x_end = x_start + arrow_scale * shift_pct,
+    y_end = y_start
+  )
+
+base_map <- ggplot(geo_combined_proj) +
+  geom_sf(aes(fill = shift_pct), color = NA) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, name = "Shift Right (%)") +
+  theme_void()
+
+centroids_coords_clean <- centroids_coords |> 
+  filter(!is.na(x_start), !is.na(x_end), !is.na(shift_pct), abs(shift_pct) >= 0.02)
+
+nyt_map <- base_map +
+  geom_segment(
+    data = centroids_coords_clean |> st_drop_geometry(),
+    aes(x = x_start, y = y_start, xend = x_end, yend = y_end),
+    arrow = arrow(length = unit(0.1, "inches")),
+    linewidth = 0.2,
+    color = "black",
+    alpha = 0.4
+  )
+nyt_map
+```
+
+This visualization clearly shows a majority of counties shifting toward the Republican candidate.
+
+Additional Analysis
+Statistical Testing: Is the median shift > 5%?
+To formally test whether the median county shift exceeded 5%, I used bootstrap resampling via the infer package.
+
+```{r}
+set.seed(123)
+
+# manually bootstrap
+shift_values <- geo_combined$shift_pct[!is.na(geo_combined$shift_pct)]
+
+bootstrap_medians <- tibble(
+  stat = replicate(1000, median(sample(shift_values, replace = TRUE)))
+)
+
+
+# observed median
+observed_median <- median(geo_combined$shift_pct, na.rm = TRUE)
+
+# confidence interval
+ci <- quantile(bootstrap_medians$stat, probs = c(0.025, 0.975), na.rm = TRUE)
+
+# p-value
+p_val <- mean(bootstrap_medians$stat >= observed_median)
+
+ci
+p_val
+
+```
+
+✅ 95% Confidence Interval: [1.7%, 1.85%]
+✅ p-value: 0.513
+
+Since p > 0.05, I failed to reject the null hypothesis: the median shift was not greater than 5%.
+
+This statistical evidence suggests that, while many counties shifted right, the median shift was modest.
+
+Proportion of Counties Shifting Right
+I calculated the proportion of counties experiencing a rightward shift:
+```{r}
+```{r}
+# Calculate proportion of counties shifting right
+percent_right_shift <- geo_combined |>
+  filter(!is.na(shift_pct)) |>   
+  # remove NAs
+  summarize(percent = mean(shift_pct > 0) * 100) |>  
+  # percent of counties with positive shift
+  pull(percent)
+
+percent_right_shift
+
+percent_right_shift
+```
+
+➡️ 91.2% of counties shifted right compared to 2020.
+
+Shift Direction Distribution
+```{r}
+geo_combined |> 
+  mutate(shift_dir = ifelse(shift_pct > 0, "Right", "Left")) |>
+  count(shift_dir) |>
+  ggplot(aes(x = shift_dir, y = n, fill = shift_dir)) +
+  geom_col() +
+  labs(title = "Direction of Shift by County", y = "Number of Counties") +
+  theme_minimal()
+```
+
+This figure visually reinforces that most counties shifted right.
+
+Mean Shift in Large Counties
+For counties with over 100,000 votes:
+```{r}
+# Calculate mean shift for counties with over 100,000 votes in 2024
+mean_shift_large <- geo_combined |>
+  filter(!is.na(shift_pct), total_2024 >= 100000) |>  
+  # ensure no NA and population threshold
+  summarize(mean_shift = mean(shift_pct)) |> 
+  pull(mean_shift)
+
+mean_shift_large
+
+```
+
+➡️ Mean shift among large counties: +1.87%
+
+Partisan Narrative
+From a Republican standpoint, the 2024 election signified a broad ideological realignment. Framing the narrative:
+
+**“The red wave is undeniable.
+🔴 Over 91% of counties moved toward Trump.
+🔴 Even historically blue strongholds like Miami-Dade flipped by +72,000 votes.
+🔴 49 states showed increased Republican support; Louisiana stood alone resisting.
+
+Democrats argue ‘land doesn’t vote’—but it’s not about the map. It’s about momentum.
+And from every corner of America, voters sent a clear message: America’s moving right.”**
+
+Discussion
+Although a partisan narrative emphasizes widespread Republican gains, my statistical findings highlight nuance:
+
+✅ The median county shift was small (1.8%)
+✅ Large urban counties barely shifted (mean +1.9%)
+✅ The visual impact of red-dominant maps belies population-weighted trends
+
+The Republican narrative is visually compelling but statistically restrained.
+
+This underscores the power of geographic visualization in shaping perceptions—maps with more “red” don’t always reflect voter counts, but they do influence narratives.
+
+Conclusion
+In this project, I scraped, cleaned, and analyzed 2024 and 2020 election data at the county level. I reproduced the NYT map and conducted inferential tests to assess the narrative of a national rightward shift.
+
+While the majority of counties shifted toward Trump, the magnitude of those shifts was modest in population centers. The narrative of a sweeping ideological transformation holds in a geographic sense, but less so in vote-weighted terms.
+
+This analysis demonstrates how data can be wielded to craft persuasive partisan messages—even when the underlying statistics are more nuanced.
+
+References
+Wikipedia: “2024 United States Presidential Election in [State]”
+
+U.S. Census Bureau: TIGER/Line Shapefiles
+
+
