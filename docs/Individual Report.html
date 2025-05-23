@@ -9,7 +9,7 @@
 <meta name="author" content="Giovanni Scacco (@Gigio002)">
 <meta name="dcterms.date" content="2025-05-22">
 
-<title>Individual Report – STA 9750 Submission Material</title>
+<title>individual-report – STA 9750 Submission Material</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -40,7 +40,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-6685f57f7611d95a701d58b4cc6878c0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-881dbf22b6519a92eba1056030b61ac1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -72,7 +72,7 @@ ul.task-list li input[type="checkbox"] {
 
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed fullcontent">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -92,24 +92,7 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul class="collapse">
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">0.1</span> 🎬 Introduction</a></li>
-  <li><a href="#data-acquisition-preparation" id="toc-data-acquisition-preparation" class="nav-link" data-scroll-target="#data-acquisition-preparation"><span class="header-section-number">0.2</span> 📥 Data Acquisition &amp; Preparation</a></li>
-  <li><a href="#load-and-clean-the-dataset" id="toc-load-and-clean-the-dataset" class="nav-link" data-scroll-target="#load-and-clean-the-dataset"><span class="header-section-number">1</span> Load and clean the dataset</a>
-  <ul class="collapse">
-  <li><a href="#linear-regression-budget-vs.-gross" id="toc-linear-regression-budget-vs.-gross" class="nav-link" data-scroll-target="#linear-regression-budget-vs.-gross"><span class="header-section-number">1.1</span> 📈 Linear Regression: Budget vs.&nbsp;Gross</a></li>
-  <li><a href="#roi-by-budget-tier" id="toc-roi-by-budget-tier" class="nav-link" data-scroll-target="#roi-by-budget-tier"><span class="header-section-number">1.2</span> 💡 ROI by Budget Tier</a></li>
-  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">1.3</span> ⚠️ Limitations</a></li>
-  <li><a href="#future-work" id="toc-future-work" class="nav-link" data-scroll-target="#future-work"><span class="header-section-number">1.4</span> 🔮 Future Work</a></li>
-  <li><a href="#submission-links" id="toc-submission-links" class="nav-link" data-scroll-target="#submission-links"><span class="header-section-number">1.5</span> 🔗 Submission Links</a></li>
-  </ul></li>
-  </ul>
-</nav>
-    </div>
+    
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -144,8 +127,8 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="introduction" class="level2" data-number="0.1">
-<h2 data-number="0.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">0.1</span> 🎬 Introduction</h2>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">🎬 Introduction</h2>
 <p>In a data-driven age, studios increasingly seek reliable strategies to forecast a film’s financial success. This project explores the question:</p>
 <blockquote class="blockquote">
 <p><em>“How do film budgets influence box office outcomes, and how does risk scale with investment size?”</em></p>
@@ -153,8 +136,8 @@ ul.task-list li input[type="checkbox"] {
 <p>I was responsible for <strong>Finding 1: Budget vs.&nbsp;Box Office</strong>, including data cleaning, statistical analysis, and visualization. This section establishes whether budgets predict performance and how to quantify return on investment (ROI) in the movie industry.</p>
 <hr>
 </section>
-<section id="data-acquisition-preparation" class="level2" data-number="0.2">
-<h2 data-number="0.2" class="anchored" data-anchor-id="data-acquisition-preparation"><span class="header-section-number">0.2</span> 📥 Data Acquisition &amp; Preparation</h2>
+<section id="data-acquisition-preparation" class="level2">
+<h2 class="anchored" data-anchor-id="data-acquisition-preparation">📥 Data Acquisition &amp; Preparation</h2>
 <p>Two sources formed the backbone of this analysis:</p>
 <ul>
 <li><strong>IMDb</strong>: Provided metadata like title, release year, and genre.</li>
@@ -162,16 +145,16 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <p>R: library(tidyverse) library(janitor)</p>
 </section>
-<section id="load-and-clean-the-dataset" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Load and clean the dataset</h1>
+<section id="load-and-clean-the-dataset" class="level1">
+<h1>Load and clean the dataset</h1>
 <p>data &lt;- read_csv(“data/budget_box_office.csv”) %&gt;% clean_names() %&gt;% filter(!is.na(production_budget), !is.na(domestic_gross)) %&gt;% mutate( production_budget = parse_number(production_budget), domestic_gross = parse_number(domestic_gross), roi = domestic_gross / production_budget )</p>
 <p>Final cleaned dataset: ~5,000 films with numeric budget and gross values.</p>
-<section id="linear-regression-budget-vs.-gross" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="linear-regression-budget-vs.-gross"><span class="header-section-number">1.1</span> 📈 Linear Regression: Budget vs.&nbsp;Gross</h2>
+<section id="linear-regression-budget-vs.-gross" class="level2">
+<h2 class="anchored" data-anchor-id="linear-regression-budget-vs.-gross">📈 Linear Regression: Budget vs.&nbsp;Gross</h2>
 <p>To quantify the budget-gross relationship, I fit a linear regression model:</p>
 <p>R: model &lt;- lm(domestic_gross ~ production_budget, data = data) summary(model)</p>
-<section id="model-output" class="level3" data-number="1.1.1">
-<h3 data-number="1.1.1" class="anchored" data-anchor-id="model-output"><span class="header-section-number">1.1.1</span> 📊 Model Output</h3>
+<section id="model-output" class="level3">
+<h3 class="anchored" data-anchor-id="model-output">📊 Model Output</h3>
 <ul>
 <li><strong>F-statistic:</strong> 6593</li>
 <li><strong>p-value:</strong> &lt; 0.001</li>
@@ -179,21 +162,21 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <p>This confirms a strong statistical relationship. However, variability increases with budget.</p>
 </section>
-<section id="visualization" class="level3" data-number="1.1.2">
-<h3 data-number="1.1.2" class="anchored" data-anchor-id="visualization"><span class="header-section-number">1.1.2</span> 📉 Visualization</h3>
+<section id="visualization" class="level3">
+<h3 class="anchored" data-anchor-id="visualization">📉 Visualization</h3>
 <p>R: ggplot(data, aes(x = production_budget, y = domestic_gross)) + geom_point(alpha = 0.4, color = “darkblue”) + geom_smooth(method = “lm”, se = FALSE, color = “red”) + scale_x_log10(labels = scales::dollar) + scale_y_log10(labels = scales::dollar) + labs( title = “Production Budget vs.&nbsp;Domestic Gross”, x = “Production Budget (log scale)”, y = “Domestic Gross (log scale)” )</p>
 <p>The scatterplot shows clear positive correlation but substantial spread—especially at high budget levels.</p>
 <hr>
 </section>
 </section>
-<section id="roi-by-budget-tier" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="roi-by-budget-tier"><span class="header-section-number">1.2</span> 💡 ROI by Budget Tier</h2>
+<section id="roi-by-budget-tier" class="level2">
+<h2 class="anchored" data-anchor-id="roi-by-budget-tier">💡 ROI by Budget Tier</h2>
 <p>To explore efficiency, I segmented ROI by production budget tiers:</p>
 <p>R: data &lt;- data %&gt;% mutate(budget_group = case_when( production_budget &lt; 30e6 ~ “Low-to-Mid Budget”, between(production_budget, 30e6, 100e6) ~ “Mid-to-High Budget”, production_budget &gt; 100e6 ~ “Blockbuster” ))</p>
 <p>roi_summary &lt;- data %&gt;% group_by(budget_group) %&gt;% summarise(avg_roi = mean(roi, na.rm = TRUE), .groups = ‘drop’)</p>
 <p>roi_summary</p>
-<section id="roi-table" class="level3" data-number="1.2.1">
-<h3 data-number="1.2.1" class="anchored" data-anchor-id="roi-table"><span class="header-section-number">1.2.1</span> 📋 ROI Table</h3>
+<section id="roi-table" class="level3">
+<h3 class="anchored" data-anchor-id="roi-table">📋 ROI Table</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -217,15 +200,15 @@ ul.task-list li input[type="checkbox"] {
 </tbody>
 </table>
 </section>
-<section id="boxplot-by-budget-tier" class="level3" data-number="1.2.2">
-<h3 data-number="1.2.2" class="anchored" data-anchor-id="boxplot-by-budget-tier"><span class="header-section-number">1.2.2</span> 📊 Boxplot by Budget Tier</h3>
+<section id="boxplot-by-budget-tier" class="level3">
+<h3 class="anchored" data-anchor-id="boxplot-by-budget-tier">📊 Boxplot by Budget Tier</h3>
 <p>R: ggplot(data, aes(x = budget_group, y = roi)) + geom_boxplot(fill = “skyblue”) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + labs( title = “ROI Distribution by Budget Tier”, x = “Budget Group”, y = “Return on Investment (ROI)” )</p>
 <p>Lower-budget films often yield higher ROI. Blockbusters, though profitable, show diminishing marginal returns.</p>
 <hr>
 </section>
 </section>
-<section id="limitations" class="level2" data-number="1.3">
-<h2 data-number="1.3" class="anchored" data-anchor-id="limitations"><span class="header-section-number">1.3</span> ⚠️ Limitations</h2>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">⚠️ Limitations</h2>
 <ul>
 <li>Marketing expenses were excluded.</li>
 <li>Revenue was limited to domestic box office (not global).</li>
@@ -234,8 +217,8 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <hr>
 </section>
-<section id="future-work" class="level2" data-number="1.4">
-<h2 data-number="1.4" class="anchored" data-anchor-id="future-work"><span class="header-section-number">1.4</span> 🔮 Future Work</h2>
+<section id="future-work" class="level2">
+<h2 class="anchored" data-anchor-id="future-work">🔮 Future Work</h2>
 <ul>
 <li>Incorporate international revenue and marketing spend.</li>
 <li>Use non-linear models (e.g., random forest).</li>
@@ -244,8 +227,8 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <hr>
 </section>
-<section id="submission-links" class="level2" data-number="1.5">
-<h2 data-number="1.5" class="anchored" data-anchor-id="submission-links"><span class="header-section-number">1.5</span> 🔗 Submission Links</h2>
+<section id="submission-links" class="level2">
+<h2 class="anchored" data-anchor-id="submission-links">🔗 Submission Links</h2>
 <ul>
 <li><a href="https://mia-turco.github.io/STA9750-2025-SPRING/group_report.html">Summary Report</a></li>
 <li><a href="https://Gigio002.github.io/STA9750-2025-SPRING/Individual%20Final%20Report-%20Budget%20vs.%20Box%20Office.html">Individual Report</a></li>
