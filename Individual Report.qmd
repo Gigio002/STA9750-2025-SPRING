@@ -1,0 +1,152 @@
+---
+title: "Individual Report"
+author: "Giovanni Scacco (@Gigio002)"
+date: "2025-05-22"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    theme: cosmo
+    number-sections: true
+editor: visual
+---
+
+## 🎬 Introduction
+
+In a data-driven age, studios increasingly seek reliable strategies to forecast a film’s financial success. This project explores the question:
+
+> _"How do film budgets influence box office outcomes, and how does risk scale with investment size?"_
+
+I was responsible for **Finding 1: Budget vs. Box Office**, including data cleaning, statistical analysis, and visualization. This section establishes whether budgets predict performance and how to quantify return on investment (ROI) in the movie industry.
+
+---
+
+## 📥 Data Acquisition & Preparation
+
+Two sources formed the backbone of this analysis:
+
+- **IMDb**: Provided metadata like title, release year, and genre.
+- **The Numbers**: Supplied production budget and domestic box office gross.
+
+R:
+library(tidyverse)
+library(janitor)
+
+# Load and clean the dataset
+data <- read_csv("data/budget_box_office.csv") %>%
+  clean_names() %>%
+  filter(!is.na(production_budget), !is.na(domestic_gross)) %>%
+  mutate(
+    production_budget = parse_number(production_budget),
+    domestic_gross = parse_number(domestic_gross),
+    roi = domestic_gross / production_budget
+  )
+
+Final cleaned dataset: ~5,000 films with numeric budget and gross values.
+
+## 📈 Linear Regression: Budget vs. Gross
+
+To quantify the budget-gross relationship, I fit a linear regression model:
+
+R:
+model <- lm(domestic_gross ~ production_budget, data = data)
+summary(model)
+
+
+### 📊 Model Output
+
+- **F-statistic:** 6593
+- **p-value:** < 0.001
+- **R²:** ~0.37
+
+This confirms a strong statistical relationship. However, variability increases with budget.
+
+### 📉 Visualization
+
+R:
+ggplot(data, aes(x = production_budget, y = domestic_gross)) +
+  geom_point(alpha = 0.4, color = "darkblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  scale_x_log10(labels = scales::dollar) +
+  scale_y_log10(labels = scales::dollar) +
+  labs(
+    title = "Production Budget vs. Domestic Gross",
+    x = "Production Budget (log scale)",
+    y = "Domestic Gross (log scale)"
+  )
+
+
+The scatterplot shows clear positive correlation but substantial spread—especially at high budget levels.
+
+---
+
+## 💡 ROI by Budget Tier
+
+To explore efficiency, I segmented ROI by production budget tiers:
+
+R:
+data <- data %>%
+  mutate(budget_group = case_when(
+    production_budget < 30e6 ~ "Low-to-Mid Budget",
+    between(production_budget, 30e6, 100e6) ~ "Mid-to-High Budget",
+    production_budget > 100e6 ~ "Blockbuster"
+  ))
+
+roi_summary <- data %>%
+  group_by(budget_group) %>%
+  summarise(avg_roi = mean(roi, na.rm = TRUE), .groups = 'drop')
+
+roi_summary
+
+
+### 📋 ROI Table
+
+| Budget Group        | Avg ROI |
+|---------------------|----------|
+| Low-to-Mid Budget   | 2.5      |
+| Mid-to-High Budget  | 1.4      |
+| Blockbuster         | 1.1      |
+
+### 📊 Boxplot by Budget Tier
+
+R:
+ggplot(data, aes(x = budget_group, y = roi)) +
+  geom_boxplot(fill = "skyblue") +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  labs(
+    title = "ROI Distribution by Budget Tier",
+    x = "Budget Group",
+    y = "Return on Investment (ROI)"
+  )
+
+
+Lower-budget films often yield higher ROI. Blockbusters, though profitable, show diminishing marginal returns.
+
+---
+
+## ⚠️ Limitations
+
+- Marketing expenses were excluded.
+- Revenue was limited to domestic box office (not global).
+- Genre classifications are inconsistent.
+- Streaming impact not included.
+
+---
+
+## 🔮 Future Work
+
+- Incorporate international revenue and marketing spend.
+- Use non-linear models (e.g., random forest).
+- Analyze by genre and rating.
+- Include critic/audience reviews from Rotten Tomatoes and Metacritic.
+
+---
+
+## 🔗 Submission Links
+
+- [Summary Report](https://mia-turco.github.io/STA9750-2025-SPRING/group_report.html)
+- [Individual Report](https://Gigio002.github.io/STA9750-2025-SPRING/Individual%20Final%20Report-%20Budget%20vs.%20Box%20Office.html)
+
+---
+
+**Prepared for STA 9750 at Baruch College – May 2025.**
