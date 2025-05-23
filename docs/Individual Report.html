@@ -182,12 +182,6 @@ ul.task-list li input[type="checkbox"] {
 <section id="visualization" class="level3" data-number="1.1.2">
 <h3 data-number="1.1.2" class="anchored" data-anchor-id="visualization"><span class="header-section-number">1.1.2</span> 📉 Visualization</h3>
 <p>R: ggplot(data, aes(x = production_budget, y = domestic_gross)) + geom_point(alpha = 0.4, color = “darkblue”) + geom_smooth(method = “lm”, se = FALSE, color = “red”) + scale_x_log10(labels = scales::dollar) + scale_y_log10(labels = scales::dollar) + labs( title = “Production Budget vs.&nbsp;Domestic Gross”, x = “Production Budget (log scale)”, y = “Domestic Gross (log scale)” )</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="budget_vs_gross.png" class="img-fluid figure-img"></p>
-<figcaption>Scatter plot: Budget vs Gross</figcaption>
-</figure>
-</div>
 <p>The scatterplot shows clear positive correlation but substantial spread—especially at high budget levels.</p>
 <hr>
 </section>
@@ -226,12 +220,6 @@ ul.task-list li input[type="checkbox"] {
 <section id="boxplot-by-budget-tier" class="level3" data-number="1.2.2">
 <h3 data-number="1.2.2" class="anchored" data-anchor-id="boxplot-by-budget-tier"><span class="header-section-number">1.2.2</span> 📊 Boxplot by Budget Tier</h3>
 <p>R: ggplot(data, aes(x = budget_group, y = roi)) + geom_boxplot(fill = “skyblue”) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + labs( title = “ROI Distribution by Budget Tier”, x = “Budget Group”, y = “Return on Investment (ROI)” )</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="roi_by_group.png" class="img-fluid figure-img"></p>
-<figcaption>Boxplot ROI</figcaption>
-</figure>
-</div>
 <p>Lower-budget films often yield higher ROI. Blockbusters, though profitable, show diminishing marginal returns.</p>
 <hr>
 </section>
